@@ -114,6 +114,15 @@ class MulticompanyStockTransfer(models.Model):
         string='Source Picking Count',
         compute='_compute_source_picking_count',
     )
+    destination_picking_ids = fields.One2many(
+        comodel_name='stock.picking',
+        inverse_name='source_dispatch_picking_id',
+        string='Destination Pickings',
+    )
+    destination_picking_count = fields.Integer(
+        string='Destination Picking Count',
+        compute='_compute_destination_picking_count',
+    )
     notes = fields.Text(
         string='Notes',
     )
@@ -145,6 +154,11 @@ class MulticompanyStockTransfer(models.Model):
     def _compute_source_picking_count(self):
         for transfer in self:
             transfer.source_picking_count = len(transfer.source_picking_ids)
+
+    @api.depends('destination_picking_ids')
+    def _compute_destination_picking_count(self):
+        for transfer in self:
+            transfer.destination_picking_count = len(transfer.destination_picking_ids)
 
     @api.depends('line_ids.requested_qty', 'line_ids.dispatched_qty', 'line_ids.received_qty')
     def _compute_quantities(self):
@@ -277,6 +291,29 @@ class MulticompanyStockTransfer(models.Model):
         return {
             'type': 'ir.actions.act_window',
             'name': _('Source Pickings'),
+            'res_model': 'stock.picking',
+            'domain': [('id', 'in', pickings.ids)],
+            'view_mode': 'tree,form',
+            'target': 'current',
+        }
+
+    def action_view_destination_pickings(self):
+        self.ensure_one()
+        pickings = self.destination_picking_ids
+        if not pickings:
+            return False
+        if len(pickings) == 1:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Destination Picking'),
+                'res_model': 'stock.picking',
+                'res_id': pickings.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Destination Pickings'),
             'res_model': 'stock.picking',
             'domain': [('id', 'in', pickings.ids)],
             'view_mode': 'tree,form',

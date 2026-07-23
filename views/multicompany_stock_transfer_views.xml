@@ -41,9 +41,10 @@
                                 <span class="o_stat_text">Source Transfers</span>
                             </div>
                         </button>
-                        <button name="action_view_destination_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not destination_picking_id">
+                        <button name="action_view_destination_pickings" type="object" class="oe_stat_button" icon="fa-truck" invisible="destination_picking_count == 0">
                             <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_text">Destination Picking</span>
+                                <span class="o_stat_value" t-esc="destination_picking_count"/>
+                                <span class="o_stat_text">Destination Receipts</span>
                             </div>
                         </button>
                     </div>
