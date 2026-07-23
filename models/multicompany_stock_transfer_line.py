@@ -120,7 +120,7 @@ class MulticompanyStockTransferLine(models.Model):
     @api.constrains('product_id')
     def _check_product_stock_managed(self):
         for line in self:
-            if not line.product_id.stock_tracking:
+            if line.product_id.type == 'product' and not line.product_id.tracking:
                 raise ValidationError(_('Product must be stock-managed (use tracking by lots or serial numbers).'))
 
     @api.constrains('product_id', 'product_uom_id')
