@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, _
+from odoo.exceptions import ValidationError
 from odoo.tools import float_compare
 
 
@@ -35,10 +36,52 @@ class StockPicking(models.Model):
     )
 
     def _action_done(self):
+        self._check_destination_over_receipt()
         res = super()._action_done()
         self._create_destination_receipts_from_source()
         self._recompute_linked_transfer_state()
         return res
+
+    def _check_destination_over_receipt(self):
+        for picking in self:
+            if picking.multicompany_transfer_role != 'destination':
+                continue
+            if not picking.multicompany_transfer_id:
+                continue
+            invalid_products = []
+            for move in picking.move_ids:
+                if move.state not in ('assigned', 'partially_available', 'waiting'):
+                    continue
+                rounding = move.product_uom.rounding
+                qty_done = move.quantity_done
+                qty_demand = move.product_uom_qty
+                if float_compare(qty_done, qty_demand, precision_rounding=rounding) > 0:
+                    excess = qty_done - qty_demand
+                    invalid_products.append({
+                        'product': move.product_id.display_name,
+                        'demand': qty_demand,
+                        'entered': qty_done,
+                        'excess': excess,
+                        'uom': move.product_uom.name,
+                    })
+            if invalid_products:
+                error_lines = []
+                for item in invalid_products:
+                    error_lines.append(
+                        '- %s: Dispatched/Demand: %s %s, Entered: %s %s, Excess: %s %s' % (
+                            item['product'],
+                            item['demand'],
+                            item['uom'],
+                            item['entered'],
+                            item['uom'],
+                            item['excess'],
+                            item['uom'],
+                        )
+                    )
+                error_message = _(
+                    'The following products have receipt quantity exceeding dispatched quantity:\n%s'
+                ) % '\n'.join(error_lines)
+                raise ValidationError(error_message)
 
     def _create_destination_receipts_from_source(self):
         source_pickings = self.filtered(
