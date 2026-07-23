@@ -13,6 +13,7 @@ class StockPicking(models.Model):
         ondelete='set null',
         copy=False,
         index=True,
+        check_company=True,
     )
     multicompany_transfer_role = fields.Selection(
         selection=[
@@ -28,6 +29,7 @@ class StockPicking(models.Model):
         ondelete='set null',
         copy=False,
         index=True,
+        check_company=True,
     )
     destination_receipt_ids = fields.One2many(
         comodel_name='stock.picking',
@@ -109,6 +111,10 @@ class StockPicking(models.Model):
         if not self.multicompany_transfer_id:
             return False
         transfer = self.multicompany_transfer_id
+        if self.company_id != transfer.source_company_id:
+            return False
+        if transfer.transit_location_id.company_id:
+            return False
         existing = self.env['stock.picking'].search([
             ('source_dispatch_picking_id', '=', self.id),
             ('multicompany_transfer_role', '=', 'destination'),
@@ -125,11 +131,15 @@ class StockPicking(models.Model):
         if not moves_to_receive:
             return False
         picking_type = transfer.route_id.destination_picking_type_id
+        if not picking_type:
+            return False
+        if picking_type.warehouse_id.company_id != transfer.destination_company_id:
+            return False
         source_location = transfer.transit_location_id
         dest_location = transfer.destination_warehouse_id.lot_stock_id
         scheduled_date = self.date_done or self.scheduled_date
         picking_vals = {
-            'picking_type_id': picking_type.id if picking_type else False,
+            'picking_type_id': picking_type.id,
             'location_id': source_location.id,
             'location_dest_id': dest_location.id,
             'scheduled_date': scheduled_date,

@@ -97,12 +97,14 @@ class MulticompanyStockTransfer(models.Model):
         string='Source Picking',
         readonly=True,
         copy=False,
+        check_company=True,
     )
     destination_picking_id = fields.Many2one(
         comodel_name='stock.picking',
         string='Destination Picking',
         readonly=True,
         copy=False,
+        check_company=True,
     )
     source_picking_ids = fields.One2many(
         comodel_name='stock.picking',
@@ -259,8 +261,30 @@ class MulticompanyStockTransfer(models.Model):
 
     def action_cancel(self):
         for transfer in self:
-            if transfer.state in ('done', 'cancelled'):
-                raise UserError(_('Done or already cancelled transfers cannot be cancelled.'))
+            if transfer.state == 'cancelled':
+                raise UserError(_('Transfer is already cancelled.'))
+            if transfer.state == 'done':
+                raise UserError(_(
+                    'The transfer cannot be cancelled because stock has already moved. '
+                    'Process a return transfer or stock correction instead.'
+                ))
+            source_pickings_done = transfer.source_picking_ids.filtered(lambda p: p.state == 'done')
+            if source_pickings_done:
+                raise UserError(_(
+                    'The transfer cannot be cancelled because stock has already moved. '
+                    'Process a return transfer or stock correction instead.'
+                ))
+            dest_pickings_done = transfer.destination_picking_ids.filtered(lambda p: p.state == 'done')
+            if dest_pickings_done:
+                raise UserError(_(
+                    'The transfer cannot be cancelled because stock has already moved. '
+                    'Process a return transfer or stock correction instead.'
+                ))
+            pickings_to_cancel = transfer.source_picking_ids.filtered(
+                lambda p: p.state not in ('done', 'cancelled')
+            )
+            for picking in pickings_to_cancel:
+                picking.with_company(transfer.source_company_id).action_cancel()
             transfer.write({'state': 'cancelled'})
         return True
 

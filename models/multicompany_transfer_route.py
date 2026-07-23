@@ -30,6 +30,7 @@ class MulticompanyTransferRoute(models.Model):
         string='Source Warehouse',
         required=True,
         domain="[('company_id', '=', source_company_id)]",
+        check_company=True,
     )
     destination_company_id = fields.Many2one(
         comodel_name='res.company',
@@ -41,6 +42,7 @@ class MulticompanyTransferRoute(models.Model):
         string='Destination Warehouse',
         required=True,
         domain="[('company_id', '=', destination_company_id)]",
+        check_company=True,
     )
     transit_location_id = fields.Many2one(
         comodel_name='stock.location',
@@ -53,12 +55,14 @@ class MulticompanyTransferRoute(models.Model):
         string='Source Picking Type',
         required=True,
         domain="[('warehouse_id', '=', source_warehouse_id)]",
+        check_company=True,
     )
     destination_picking_type_id = fields.Many2one(
         comodel_name='stock.picking.type',
         string='Destination Picking Type',
         required=True,
         domain="[('warehouse_id', '=', destination_warehouse_id)]",
+        check_company=True,
     )
     note = fields.Text(
         string='Notes',
