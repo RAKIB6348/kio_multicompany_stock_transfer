@@ -62,31 +62,35 @@ class MulticompanyStockTransferLine(models.Model):
         string='Note',
     )
 
-    @api.depends('transfer_id.source_picking_id.move_ids.product_uom_qty')
+    @api.depends('transfer_id.source_picking_ids.move_ids.quantity_done', 'product_id', 'product_uom_id')
     def _compute_dispatched_qty(self):
+        precision = self.env['decimal.precision'].precision_get('Product Unit of Measure')
         for line in self:
-            if line.transfer_id.source_picking_id:
-                dispatched = sum(
-                    line.transfer_id.source_picking_id.move_ids.filtered(
-                        lambda m: m.product_id == line.product_id
-                    ).mapped('quantity_done')
-                )
-                line.dispatched_qty = dispatched
-            else:
-                line.dispatched_qty = 0.0
+            dispatched = 0.0
+            if line.transfer_id.source_picking_ids:
+                for picking in line.transfer_id.source_picking_ids:
+                    for move in picking.move_ids:
+                        if move.product_id == line.product_id:
+                            qty_done = move.quantity_done
+                            if move.product_uom != line.product_uom_id:
+                                qty_done = move.product_uom._compute_quantity(qty_done, line.product_uom_id)
+                            dispatched += qty_done
+            line.dispatched_qty = dispatched
 
-    @api.depends('transfer_id.destination_picking_id.move_ids.product_uom_qty')
+    @api.depends('transfer_id.destination_picking_ids.move_ids.quantity_done', 'product_id', 'product_uom_id')
     def _compute_received_qty(self):
+        precision = self.env['decimal.precision'].precision_get('Product Unit of Measure')
         for line in self:
-            if line.transfer_id.destination_picking_id:
-                received = sum(
-                    line.transfer_id.destination_picking_id.move_ids.filtered(
-                        lambda m: m.product_id == line.product_id
-                    ).mapped('quantity_done')
-                )
-                line.received_qty = received
-            else:
-                line.received_qty = 0.0
+            received = 0.0
+            if line.transfer_id.destination_picking_ids:
+                for picking in line.transfer_id.destination_picking_ids:
+                    for move in picking.move_ids:
+                        if move.product_id == line.product_id:
+                            qty_done = move.quantity_done
+                            if move.product_uom != line.product_uom_id:
+                                qty_done = move.product_uom._compute_quantity(qty_done, line.product_uom_id)
+                            received += qty_done
+            line.received_qty = received
 
     @api.depends('requested_qty', 'dispatched_qty', 'received_qty')
     def _compute_remaining_quantities(self):
@@ -99,7 +103,7 @@ class MulticompanyStockTransferLine(models.Model):
     def _compute_source_available_qty(self):
         for line in self:
             if line.product_id and line.transfer_id.source_warehouse_id:
-                quants = self.env['stock.quant'].search([
+                quants = self.env['stock.quant'].with_company(line.transfer_id.source_company_id).search([
                     ('product_id', '=', line.product_id.id),
                     ('location_id', 'child_of', line.transfer_id.source_warehouse_id.lot_stock_id.id),
                 ])

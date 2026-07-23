@@ -37,6 +37,7 @@ class StockPicking(models.Model):
     def _action_done(self):
         res = super()._action_done()
         self._create_destination_receipts_from_source()
+        self._recompute_linked_transfer_state()
         return res
 
     def _create_destination_receipts_from_source(self):
@@ -47,6 +48,16 @@ class StockPicking(models.Model):
         )
         for picking in source_pickings:
             picking._create_destination_receipt()
+
+    def _recompute_linked_transfer_state(self):
+        transfers = self.env['kio.multicompany.stock.transfer']
+        for picking in self:
+            if picking.multicompany_transfer_id:
+                transfers |= picking.multicompany_transfer_id
+            if picking.source_dispatch_picking_id and picking.source_dispatch_picking_id.multicompany_transfer_id:
+                transfers |= picking.source_dispatch_picking_id.multicompany_transfer_id
+        if transfers:
+            transfers._recompute_transfer_state()
 
     def _create_destination_receipt(self):
         self.ensure_one()

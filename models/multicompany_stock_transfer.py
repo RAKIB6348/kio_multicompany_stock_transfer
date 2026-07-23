@@ -198,7 +198,7 @@ class MulticompanyStockTransfer(models.Model):
                 raise UserError(_('All lines must have a product.'))
             if not line.product_uom_id:
                 raise UserError(_('All lines must have a unit of measure.'))
-        if self.source_picking_id:
+        if self.source_picking_ids:
             raise UserError(_('Source picking already exists.'))
 
     def _get_source_picking_type(self):
@@ -273,6 +273,45 @@ class MulticompanyStockTransfer(models.Model):
                 'cancellation_reason': False,
             })
         return True
+
+    def _recompute_transfer_state(self):
+        for transfer in self:
+            if transfer.state in ('draft', 'cancelled'):
+                continue
+            precision = self.env['decimal.precision'].precision_get('Product Unit of Measure')
+            total_requested = sum(transfer.line_ids.mapped('requested_qty'))
+            total_dispatched = sum(transfer.line_ids.mapped('dispatched_qty'))
+            total_received = sum(transfer.line_ids.mapped('received_qty'))
+            has_source_pickings = bool(transfer.source_picking_ids)
+            has_destination_pickings = bool(transfer.destination_picking_ids)
+            source_pickings_done = transfer.source_picking_ids.filtered(lambda p: p.state == 'done')
+            dest_pickings_done = transfer.destination_picking_ids.filtered(lambda p: p.state == 'done')
+            all_dispatched = float_compare(total_dispatched, total_requested, precision_digits=precision) >= 0
+            all_received = float_compare(total_received, total_dispatched, precision_digits=precision) >= 0
+            any_dispatched = float_compare(total_dispatched, 0.0, precision_digits=precision) > 0
+            any_received = float_compare(total_received, 0.0, precision_digits=precision) > 0
+            new_state = transfer.state
+            if all_dispatched and all_received and has_source_pickings and has_destination_pickings:
+                new_state = 'done'
+            elif any_received and not all_received:
+                if all_dispatched:
+                    new_state = 'partially_received'
+                else:
+                    new_state = 'in_transit'
+            elif any_dispatched and not all_dispatched:
+                new_state = 'partially_dispatched'
+            elif has_source_pickings and source_pickings_done and not has_destination_pickings:
+                new_state = 'in_transit'
+            elif has_source_pickings and not source_pickings_done and any_dispatched:
+                new_state = 'partially_dispatched'
+            elif has_source_pickings and not any_dispatched and not all_dispatched:
+                source_assigned = any(p.state in ('assigned', 'waiting') for p in transfer.source_picking_ids)
+                if source_assigned:
+                    new_state = 'ready'
+                elif transfer.state == 'confirmed':
+                    new_state = 'confirmed'
+            if new_state != transfer.state:
+                transfer.write({'state': new_state})
 
     def action_view_source_pickings(self):
         self.ensure_one()
