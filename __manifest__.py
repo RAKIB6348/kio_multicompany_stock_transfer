@@ -18,7 +18,9 @@
     'data': [
         'security/multicompany_transfer_security.xml',
         'security/ir.model.access.csv',
+        'data/ir_sequence_data.xml',
         'views/multicompany_transfer_route_views.xml',
+        'views/multicompany_stock_transfer_views.xml',
     ],
     'demo': [],
     'installable': True,

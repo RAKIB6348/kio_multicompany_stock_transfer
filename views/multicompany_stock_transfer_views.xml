@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View -->
+    <record id="multicompany_stock_transfer_tree" model="ir.ui.view">
+        <field name="name">kio.multicompany.stock.transfer.tree</field>
+        <field name="model">kio.multicompany.stock.transfer</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state == 'draft'" decoration-warning="state == 'confirmed'" decoration-success="state == 'done'" decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="scheduled_date"/>
+                <field name="source_company_id"/>
+                <field name="source_warehouse_id"/>
+                <field name="destination_company_id"/>
+                <field name="destination_warehouse_id"/>
+                <field name="requested_quantity"/>
+                <field name="dispatched_quantity"/>
+                <field name="received_quantity"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'confirmed'" decoration-success="state == 'done'" decoration-muted="state == 'cancelled'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="multicompany_stock_transfer_form" model="ir.ui.view">
+        <field name="name">kio.multicompany.stock.transfer.form</field>
+        <field name="model">kio.multicompany.stock.transfer</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_ready" type="object" string="Check Availability" class="oe_highlight" invisible="state != 'confirmed'"/>
+                    <button name="action_cancel" type="object" string="Cancel" invisible="state in ('done', 'cancelled')"/>
+                    <button name="action_draft" type="object" string="Reset to Draft" invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,ready,in_transit,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_source_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not source_picking_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Source Picking</span>
+                            </div>
+                        </button>
+                        <button name="action_view_destination_picking" type="object" class="oe_stat_button" icon="fa-truck" invisible="not destination_picking_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Destination Picking</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <!-- Transfer Information -->
+                    <group string="Transfer Information">
+                        <group>
+                            <field name="route_id" readonly="state != 'draft'"/>
+                            <field name="scheduled_date" readonly="state != 'draft'"/>
+                            <field name="responsible_id" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+
+                    <!-- Source and Destination -->
+                    <group string="Source and Destination">
+                        <group string="Source">
+                            <field name="source_company_id"/>
+                            <field name="source_warehouse_id"/>
+                        </group>
+                        <group string="Destination">
+                            <field name="destination_company_id"/>
+                            <field name="destination_warehouse_id"/>
+                        </group>
+                    </group>
+
+                    <!-- Product Lines -->
+                    <notebook>
+                        <page string="Product Lines" name="product_lines">
+                            <field name="line_ids" readonly="state not in ('draft',)">
+                                <tree editable="bottom">
+                                    <field name="product_id" readonly="state not in ('draft',)"/>
+                                    <field name="product_uom_id" readonly="state not in ('draft',)"/>
+                                    <field name="requested_qty" readonly="state not in ('draft',)"/>
+                                    <field name="dispatched_qty"/>
+                                    <field name="received_qty"/>
+                                    <field name="remaining_to_dispatch_qty"/>
+                                    <field name="remaining_to_receive_qty"/>
+                                    <field name="source_available_qty"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <!-- Quantity Summary -->
+                        <page string="Quantity Summary" name="quantity_summary">
+                            <group string="Quantity Summary">
+                                <group>
+                                    <field name="requested_quantity"/>
+                                    <field name="dispatched_quantity"/>
+                                </group>
+                                <group>
+                                    <field name="received_quantity"/>
+                                    <field name="remaining_quantity"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Notes -->
+                        <page string="Notes" name="notes">
+                            <group string="Notes">
+                                <field name="notes" placeholder="Additional notes..."/>
+                            </group>
+                            <group string="Cancellation Reason" invisible="state != 'cancelled'">
+                                <field name="cancellation_reason" placeholder="Reason for cancellation..."/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="multicompany_stock_transfer_search" model="ir.ui.view">
+        <field name="name">kio.multicompany.stock.transfer.search</field>
+        <field name="model">kio.multicompany.stock.transfer</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="line_ids" string="Product"/>
+                <field name="source_company_id"/>
+                <field name="destination_company_id"/>
+                <field name="source_warehouse_id"/>
+                <field name="destination_warehouse_id"/>
+                <field name="responsible_id"/>
+                <field name="state"/>
+                <separator/>
+                <filter string="My Transfers" name="my_transfers" domain="[('responsible_id', '=', uid)]"/>
+                <separator/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Ready" name="ready" domain="[('state', '=', 'ready')]"/>
+                <filter string="In Transit" name="in_transit" domain="[('state', '=', 'in_transit')]"/>
+                <filter string="Partially Received" name="partially_received" domain="[('state', '=', 'partially_received')]"/>
+                <filter string="Done" name="done" domain="[('state', '=', 'done')]"/>
+                <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="Source Company" name="group_by_source_company" context="{'group_by': 'source_company_id'}"/>
+                    <filter string="Destination Company" name="group_by_destination_company" context="{'group_by': 'destination_company_id'}"/>
+                    <filter string="Responsible" name="group_by_responsible" context="{'group_by': 'responsible_id'}"/>
+                    <filter string="State" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Scheduled Date" name="group_by_scheduled_date" context="{'group_by': 'scheduled_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_multicompany_stock_transfer" model="ir.actions.act_window">
+        <field name="name">Multi-Company Stock Transfers</field>
+        <field name="res_model">kio.multicompany.stock.transfer</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="multicompany_stock_transfer_search"/>
+        <field name="context">{'search_default_my_transfers': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new multi-company stock transfer
+            </p>
+            <p>
+                Manage stock transfers between different companies.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem
+        id="menu_multicompany_stock_transfer"
+        name="Multi-Company Stock Transfers"
+        parent="stock.menu_stock_warehouse"
+        action="action_multicompany_stock_transfer"
+        sequence="50"
+        groups="group_multicompany_transfer_user"
+    />
+</odoo>
