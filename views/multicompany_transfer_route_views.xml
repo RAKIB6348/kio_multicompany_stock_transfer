@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View -->
+    <record id="multicompany_transfer_route_tree" model="ir.ui.view">
+        <field name="name">kio.multicompany.transfer.route.tree</field>
+        <field name="model">kio.multicompany.transfer.route</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="source_company_id"/>
+                <field name="source_warehouse_id"/>
+                <field name="destination_company_id"/>
+                <field name="destination_warehouse_id"/>
+                <field name="active" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="multicompany_transfer_route_form" model="ir.ui.view">
+        <field name="name">kio.multicompany.transfer.route.form</field>
+        <field name="model">kio.multicompany.transfer.route</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Route Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Settings">
+                            <field name="active"/>
+                            <field name="sequence"/>
+                        </group>
+                    </group>
+                    <group string="Source">
+                        <group>
+                            <field name="source_company_id"/>
+                            <field name="source_warehouse_id"/>
+                            <field name="source_picking_type_id"/>
+                        </group>
+                    </group>
+                    <group string="Destination">
+                        <group>
+                            <field name="destination_company_id"/>
+                            <field name="destination_warehouse_id"/>
+                            <field name="destination_picking_type_id"/>
+                        </group>
+                    </group>
+                    <group string="Transit">
+                        <group>
+                            <field name="transit_location_id"/>
+                        </group>
+                    </group>
+                    <separator string="Notes"/>
+                    <field name="note" placeholder="Additional notes..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_multicompany_transfer_route" model="ir.actions.act_window">
+        <field name="name">Multi-Company Transfer Routes</field>
+        <field name="res_model">kio.multicompany.transfer.route</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new multi-company transfer route
+            </p>
+            <p>
+                Configure routes for stock transfers between different companies.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem
+        id="menu_multicompany_transfer_route"
+        name="Multi-Company Transfer Routes"
+        parent="stock.menu_warehouse_config"
+        action="action_multicompany_transfer_route"
+        sequence="100"
+        groups="group_multicompany_transfer_manager"
+    />
+</odoo>
