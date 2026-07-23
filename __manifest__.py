@@ -8,7 +8,7 @@
         =================================
         Manage stock transfers between two different companies inside the same Odoo database.
     """,
-    'author': 'KIO',
+    'author': 'Rakib Hasan',
     'website': '',
     'license': 'LGPL-3',
     'depends': [

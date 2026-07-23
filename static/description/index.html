@@ -1,11 +1,341 @@
-<section class="oe_container">
+<section class="oe_container oe_dark">
     <div class="oe_row oe_spaced">
-        <h2 class="oe_slogan">KIO Multi-Company Stock Transfer</h2>
+        <h2 class="oe_slogan" style="color:#875A7B;">KIO Multi-Company Stock Transfer</h2>
         <h3 class="oe_slogan">Manage stock transfers between different companies</h3>
         <div class="oe_span12">
+            <p class="oe_mt32" style="text-align:center;">
+                A complete solution for managing inter-company stock transfers within a single Odoo 17 database.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Business Purpose</h2>
+        <div class="oe_span12">
             <p class="oe_mt32">
-                This module provides functionality for managing stock transfers
-                between two different companies inside the same Odoo database.
+                Organizations operating multiple companies in a single Odoo database need to transfer inventory between locations belonging to different legal entities. This module provides:
+            </p>
+            <ul>
+                <li>Centralized configuration of transfer routes between companies</li>
+                <li>Automated creation of source pickings and destination receipts</li>
+                <li>Shared transit location for inter-company stock movement</li>
+                <li>Multi-company security with proper access controls</li>
+                <li>Complete audit trail via Odoo's chatter system</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container oe_dark">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Important Limitations</h2>
+        <div class="oe_span12">
+            <div class="alert alert-warning" style="text-align:center;">
+                <strong>This module does NOT:</strong>
+            </div>
+            <ul>
+                <li>Create Sales Orders</li>
+                <li>Create Purchase Orders</li>
+                <li>Create Invoices or Vendor Bills</li>
+                <li>Manually create Accounting Entries</li>
+                <li>Modify standard Odoo stock valuation behavior</li>
+            </ul>
+            <p class="oe_mt32">
+                Standard Odoo stock valuation remains active. The module only manages stock transfer logistics between companies.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Workflow Overview</h2>
+        <div class="oe_span12">
+            <div class="oe_demo oe_screenshot" style="max-width:800px; margin:auto;">
+                <div class="oe_structure">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="card border-primary mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">1. Route Configuration</h5>
+                                    <p class="card-text">Define transfer routes between source and destination companies with shared transit locations.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="card border-success mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">2. Source Dispatch</h5>
+                                    <p class="card-text">Create and process source picking in source company. Stock moves to transit location.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="card border-info mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">3. Destination Receipt</h5>
+                                    <p class="card-text">Automated destination receipt creation. Process receipt in destination company.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container oe_dark">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Transfer States</h2>
+        <div class="oe_span12">
+            <table class="table table-striped" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>State</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>Draft</strong></td><td>Initial state, not yet confirmed</td></tr>
+                    <tr><td><strong>Confirmed</strong></td><td>Confirmed, source picking created</td></tr>
+                    <tr><td><strong>Ready</strong></td><td>Source picking assigned/reserved</td></tr>
+                    <tr><td><strong>Partially Dispatched</strong></td><td>Some quantity dispatched from source</td></tr>
+                    <tr><td><strong>In Transit</strong></td><td>Stock dispatched, awaiting receipt</td></tr>
+                    <tr><td><strong>Partially Received</strong></td><td>Some dispatched quantity received</td></tr>
+                    <tr><td><strong>Done</strong></td><td>All quantities dispatched and received</td></tr>
+                    <tr><td><strong>Cancelled</strong></td><td>Transfer cancelled</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Partial Dispatch and Backorders</h2>
+        <div class="oe_span12">
+            <p class="oe_mt32">
+                The module supports partial dispatch with automatic backorder handling:
+            </p>
+            <div class="alert alert-info">
+                <strong>Example:</strong>
+                <ul>
+                    <li>Requested: 100 units</li>
+                    <li>First dispatch: 60 units
+                        <ul>
+                            <li>Backorder created for remaining 40 units</li>
+                            <li>Destination receipt created for 60 units</li>
+                        </ul>
+                    </li>
+                    <li>Second dispatch (backorder): 40 units
+                        <ul>
+                            <li>Second destination receipt created for 40 units</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <p><strong>Rules:</strong></p>
+            <ul>
+                <li>Destination receipt quantity cannot exceed dispatched quantity</li>
+                <li>Over-receipt is blocked with validation error</li>
+                <li>Partial receipts are supported</li>
+                <li>Each source dispatch creates its own destination receipt</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container oe_dark">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Security</h2>
+        <div class="oe_span12">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Security Groups</h4>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr><th>Group</th><th>Permissions</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Transfer User</td><td>Read allowed transfers, create requests, edit drafts, open pickings</td></tr>
+                            <tr><td>Transfer Manager</td><td>Confirm transfers, cancel transfers, configure routes, full access</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h4>Multi-Company Access</h4>
+                    <p>Record rules ensure users only see transfers related to their allowed companies:</p>
+                    <ul>
+                        <li>Source company is in user's companies</li>
+                        <li>OR destination company is in user's companies</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Cancellation Rules</h2>
+        <div class="oe_span12">
+            <table class="table table-striped" style="width:100%;">
+                <thead>
+                    <tr><th>Transfer State</th><th>Cancellation</th><th>Reason</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Draft</td><td style="color:green;">Allowed</td><td>No stock moved</td></tr>
+                    <tr><td>Confirmed</td><td style="color:green;">Allowed</td><td>If no source picking is Done</td></tr>
+                    <tr><td>Ready</td><td style="color:green;">Allowed</td><td>If no source picking is Done</td></tr>
+                    <tr><td>Partially Dispatched</td><td style="color:red;">Blocked</td><td>Stock has moved</td></tr>
+                    <tr><td>In Transit</td><td style="color:red;">Blocked</td><td>Stock has moved</td></tr>
+                    <tr><td>Partially Received</td><td style="color:red;">Blocked</td><td>Stock has moved</td></tr>
+                    <tr><td>Done</td><td style="color:red;">Blocked</td><td>Stock has moved</td></tr>
+                    <tr><td>Cancelled</td><td style="color:red;">Blocked</td><td>Already cancelled</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container oe_dark">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Installation</h2>
+        <div class="oe_span12">
+            <h4>Prerequisites</h4>
+            <ul>
+                <li>Odoo 17.0</li>
+                <li>Stock module</li>
+                <li>Mail module</li>
+            </ul>
+            <h4>Steps</h4>
+            <ol>
+                <li>Place the <code>kio_multicompany_stock_transfer</code> directory in your Odoo addons path</li>
+                <li>Restart the Odoo server</li>
+                <li>Go to Settings > Apps</li>
+                <li>Search for "KIO Multi-Company Stock Transfer"</li>
+                <li>Click Install</li>
+            </ol>
+            <h4>Command Line</h4>
+            <pre><code>./odoo-bin -c odoo.conf -d &lt;database_name&gt; \
+  -i kio_multicompany_stock_transfer --stop-after-init</code></pre>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">User Guide</h2>
+        <div class="oe_span12">
+            <h4>Creating a Route</h4>
+            <ol>
+                <li>Navigate to <strong>Inventory > Configuration > Multi-Company Transfer Routes</strong></li>
+                <li>Click Create</li>
+                <li>Fill in Route Name, Source/Destination Company and Warehouse, Transit Location, Picking Types</li>
+                <li>Save</li>
+            </ol>
+            <h4>Creating a Transfer</h4>
+            <ol>
+                <li>Navigate to <strong>Inventory > Operations > Multi-Company Stock Transfers</strong></li>
+                <li>Click Create</li>
+                <li>Select Route (auto-fills company/warehouse fields)</li>
+                <li>Add product lines with quantities</li>
+                <li>Click Confirm</li>
+            </ol>
+            <h4>Processing a Transfer</h4>
+            <ol>
+                <li>Open the confirmed transfer</li>
+                <li>Click Source Picking smart button</li>
+                <li>Process the picking (validate with quantities)</li>
+                <li>Destination receipt is automatically created</li>
+                <li>Open destination picking from the transfer</li>
+                <li>Validate the destination receipt</li>
+                <li>Transfer state updates to Done</li>
+            </ol>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container oe_dark">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Technical Details</h2>
+        <div class="oe_span12">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Models</h4>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr><th>Model</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>kio.multicompany.stock.transfer</code></td><td>Main transfer record</td></tr>
+                            <tr><td><code>kio.multicompany.stock.transfer.line</code></td><td>Transfer line items</td></tr>
+                            <tr><td><code>kio.multicompany.transfer.route</code></td><td>Route configuration</td></tr>
+                            <tr><td><code>stock.picking</code> (inherited)</td><td>Extended with transfer fields</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h4>Sequence</h4>
+                    <p><strong>Code:</strong> <code>kio.multicompany.stock.transfer</code></p>
+                    <p><strong>Format:</strong> <code>MCT/YYYY/NNNNN</code></p>
+                    <p><strong>Example:</strong> <code>MCT/2026/00001</code></p>
+                    <h4>Dependencies</h4>
+                    <ul>
+                        <li><code>stock</code> - Core inventory management</li>
+                        <li><code>mail</code> - Chatter and activity tracking</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Testing</h2>
+        <div class="oe_span12">
+            <p class="oe_mt32">The module includes 25 automated test cases covering:</p>
+            <div class="row">
+                <div class="col-md-4">
+                    <ul>
+                        <li>Route validation (4 tests)</li>
+                        <li>Transfer validation (2 tests)</li>
+                        <li>Source picking creation (2 tests)</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <ul>
+                        <li>Destination receipt workflow (5 tests)</li>
+                        <li>Partial dispatch and backorders (2 tests)</li>
+                        <li>Over-receipt protection (1 test)</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <ul>
+                        <li>Transfer totals and states (2 tests)</li>
+                        <li>Cancellation rules (2 tests)</li>
+                        <li>Security and access control (2 tests)</li>
+                        <li>Code quality checks (2 tests)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container oe_dark">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">License</h2>
+        <div class="oe_span12" style="text-align:center;">
+            <p class="oe_mt32">
+                This module is licensed under <strong>LGPL-3</strong>.
+            </p>
+            <p>
+                Copyright (C) 2026 Rakib Hasan
             </p>
         </div>
     </div>
